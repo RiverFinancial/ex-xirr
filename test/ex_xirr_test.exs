@@ -40,7 +40,7 @@ defmodule ExXirrTest do
     test "long investment" do
       v = [
         105_187.06,
-        816_709.66,
+        -816_709.66,
         479_069.684,
         937_309.708,
         88622.661,
@@ -112,7 +112,7 @@ defmodule ExXirrTest do
         {2013, 05, 21}
       ]
 
-      assert ExXirr.xirr(Enum.zip(d, v)) == {:ok, 0.08006}
+      assert ExXirr.xirr(Enum.zip(d, v)) == {:ok, 190_338.715931}
     end
 
     test "wrong values" do
@@ -141,6 +141,69 @@ defmodule ExXirrTest do
       d = [{2017, 1, 1}, {2017, 1, 5}]
       v = [10000, -11000]
       assert ExXirr.xirr(Enum.zip(d, v)) == {:error, "Unable to converge"}
+    end
+
+    test "zero cash flow should not affect xirr result" do
+      v = [
+        2_048_092,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -50000,
+        -10000
+      ]
+
+      d = [
+        {2019, 11, 12},
+        {2019, 10, 15},
+        {2019, 9, 15},
+        {2019, 8, 15},
+        {2018, 10, 1},
+        {2018, 2, 21},
+        {2017, 12, 24},
+        {2017, 9, 17},
+        {2016, 2, 21},
+        {2016, 2, 20}
+      ]
+
+      {:ok, result_without_zero_cash_flow} = ExXirr.xirr(Enum.zip(d, v))
+
+      v_with_zero_cash_flows = [
+        2_048_092,
+        0,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -100_000,
+        -50000,
+        -10000
+      ]
+
+      d_with_zero_cash_flows = [
+        {2019, 11, 12},
+        {2018, 11, 12},
+        {2019, 10, 15},
+        {2019, 9, 15},
+        {2019, 8, 15},
+        {2018, 10, 1},
+        {2018, 2, 21},
+        {2017, 12, 24},
+        {2017, 9, 17},
+        {2016, 2, 21},
+        {2016, 2, 20}
+      ]
+
+      {:ok, result_with_zero_cash_flows} =
+        ExXirr.xirr(Enum.zip(d_with_zero_cash_flows, v_with_zero_cash_flows))
+
+      assert result_without_zero_cash_flow == result_with_zero_cash_flows
     end
   end
 end

@@ -25,7 +25,13 @@ defmodule ExXirr do
   end
 
   def xirr(dates_values) do
-    dates_values = dates_values |> Enum.map(fn {date, value} -> {Date.from_erl!(date), value} end)
+    dates_values =
+      dates_values
+      |> Enum.map(fn {date, value} -> {Date.from_erl!(date), value} end)
+      |> Enum.sort(fn {d1, _}, {d2, _} ->
+        Date.compare(d1, d2) == :lt
+      end)
+
     min_date = dates_values |> List.first() |> elem(0)
     {dates, values, dates_values} = compact_flow(dates_values, min_date)
 
@@ -176,18 +182,16 @@ defmodule ExXirr do
   defp calculate(:xirr, _, _, _, 300), do: {:error, "I give up"}
 
   defp calculate(:xirr, dates_values, _, rate, tries) do
-    {xirr, dxirr} = reduce_date_values(dates_values, rate)
+    case reduce_date_values(dates_values, rate) do
+      {_, 0.0} ->
+        {:error, "Could not converge due to nearly zero derivative"}
 
-    new_rate =
-      if dxirr < 0.0 do
-        rate
-      else
-        rate - xirr / dxirr
-      end
-
-    diff = Kernel.abs(new_rate - rate)
-    diff = if diff < @max_error, do: 0.0
-    tries = tries + 1
-    calculate(:xirr, dates_values, diff, new_rate, tries)
+      {xirr, dxirr} ->
+        new_rate = rate - xirr / dxirr
+        diff = Kernel.abs(new_rate - rate)
+        diff = if diff < @max_error, do: 0.0
+        tries = tries + 1
+        calculate(:xirr, dates_values, diff, new_rate, tries)
+    end
   end
 end
