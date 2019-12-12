@@ -15,24 +15,19 @@ defmodule ExXirr do
 
   ## Examples
 
-      iex> d = [{1985, 1, 1}, {1990, 1, 1}, {1995, 1, 1}]
-      iex> v = [1000, -600, -200]
-      iex> ExXirr.xirr(d,v)
+      iex> ExXirr.xirr([{{1985, 1, 1}, 1000}, {{1990, 1, 1}, -600}, {{1995, 1, 1}, -200}])
       {:ok, -0.034592}
   """
-  @spec xirr([Date.t()], [number]) :: float
-  def xirr(dates, values) when length(dates) != length(values) do
-    {:error, "Date and Value collections must have the same size"}
+  @spec xirr([{Date.t(), number}]) :: float
+
+  def xirr(dates_values) when length(dates_values) < 10 do
+    LegacyFinance.xirr(dates_values)
   end
 
-  def xirr(dates, values) when length(dates) < 10 do
-    LegacyFinance.xirr(dates, values)
-  end
-
-  def xirr(dates, values) do
-    dates = Enum.map(dates, &Date.from_erl!(&1))
-    min_date = dates |> List.first()
-    {dates, values, dates_values} = compact_flow(Enum.zip(dates, values), min_date)
+  def xirr(dates_values) do
+    dates_values = dates_values |> Enum.map(fn {date, value} -> {Date.from_erl!(date), value} end)
+    min_date = dates_values |> List.first() |> elem(0)
+    {dates, values, dates_values} = compact_flow(dates_values, min_date)
 
     cond do
       !verify_flow(values) ->
@@ -55,9 +50,7 @@ defmodule ExXirr do
 
   ## Examples
 
-      iex> d = [{1985, 1, 1}, {1990, 1, 1}, {1995, 1, 1}]
-      iex> v = [1000, -600, -200]
-      iex> {:ok, rate} = ExXirr.xirr(d,v)
+      iex> {:ok, rate} = ExXirr.xirr([{{1985, 1, 1}, 1000}, {{1990, 1, 1}, -600}, {{1995, 1, 1}, -200}])
       iex> ExXirr.absolute_rate(rate, 50)
       {:ok, -0.48}
   """

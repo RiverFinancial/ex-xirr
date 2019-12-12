@@ -30,23 +30,15 @@ defmodule LegacyFinance do
   Function to calculate the XIRR for a given array of dates and values.
 
   ## Examples
-      iex> d = [{2015, 11, 1}, {2015,10,1}, {2015,6,1}]
-      iex> v = [-800_000, -2_200_000, 1_000_000]
-      iex> Finance.xirr(d,v)
+      iex> Finance.xirr([{{2015, 11, 1}, -800_000}, {{2015,10,1}, -2_200_000}, {{2015,6,1}, 1_000_000}])
       { :ok, 21.118359 }
   """
-  @spec xirr([date], [number]) :: rate
-  def xirr(dates, values) when length(dates) != length(values) do
-    {:error, "Date and Value collections must have the same size"}
-  end
+  @spec xirr([{date, number}]) :: rate
+  def xirr(dates_values) do
+    dates_values = dates_values |> Enum.map(fn {date, value} -> {Date.from_erl!(date), value} end)
 
-  def xirr(dates, values) do
-    dates =
-      dates
-      |> pmap(&Date.from_erl!/1)
-
-    min_date = Enum.min(dates)
-    {dates, values, dates_values} = compact_flow(Enum.zip(dates, values), min_date)
+    min_date = dates_values |> List.first() |> elem(0)
+    {dates, values, dates_values} = compact_flow(dates_values, min_date)
 
     cond do
       !verify_flow(values) ->
