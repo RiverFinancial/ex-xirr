@@ -110,7 +110,7 @@ defmodule LegacyFinance do
     acc * first_value_sign(dates_values)
   end
 
-  defp calculate(:xirr, _date_values, 0.0, {rate, _bottom, _upper}, _tries) do
+  defp calculate(:xirr, _date_values, acc, {rate, _bottom, _upper}, _tries) when acc == 0.0 do
     {:ok, Float.round(rate, 6)}
   end
 

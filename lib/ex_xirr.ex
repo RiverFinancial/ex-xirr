@@ -177,13 +177,13 @@ defmodule ExXirr do
 
   @spec calculate(atom(), list(), float(), float(), integer()) ::
           {:ok, float()} | {:error, String.t()}
-  defp calculate(:xirr, _, 0.0, rate, _), do: {:ok, Float.round(rate, 6)}
+  defp calculate(:xirr, _, diff, rate, _) when diff == 0.0, do: {:ok, Float.round(rate, 6)}
   defp calculate(:xirr, _, _, -1.0, _), do: {:error, "Could not converge"}
   defp calculate(:xirr, _, _, _, 300), do: {:error, "I give up"}
 
   defp calculate(:xirr, dates_values, _, rate, tries) do
     case reduce_date_values(dates_values, rate) do
-      {_, 0.0} ->
+      {_, dxirr} when dxirr == 0.0 ->
         {:error, "Could not converge due to nearly zero derivative"}
 
       {xirr, dxirr} ->
