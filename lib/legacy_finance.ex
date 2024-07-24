@@ -1,6 +1,4 @@
 defmodule LegacyFinance do
-  use Timex
-
   @moduledoc """
   Library to calculate IRR through the Bisection method.
   """
